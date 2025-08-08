@@ -23,7 +23,7 @@ def get_directory_contents(path):
     contents = {}
     if not os.path.exists(path):
         return contents
-    
+
     for root, dirs, files in os.walk(path):
         rel_path = os.path.relpath(root, path)
 
@@ -50,7 +50,7 @@ def log_operation(operation, path, log_file_path):
     log_entry = {
         "timestamp": timestamp,
         "operation": operation,
-        "path": path 
+        "path": path
     }
 
     logs = []
@@ -85,7 +85,7 @@ def synchronize(source_path, replica_path, log_file_path):
         log_operation("CREATE", replica_path, log_file_path)
 
     processed = set()
-    
+
     # create dirs
     for rel_path, info in source_contents.items():
         if info["type"] == "dir":
