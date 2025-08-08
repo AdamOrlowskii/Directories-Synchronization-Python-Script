@@ -30,7 +30,7 @@ def get_directory_contents(path):
         for d in dirs:
             dir_rel_path = os.path.join(rel_path, d) if rel_path != "." else d
             contents[dir_rel_path] = {"type": "dir"}
-        
+
         for f in files:
             file_rel_path = os.path.join(rel_path, f) if rel_path != "." else f
             file_full_path = os.path.join(root, f)
@@ -44,7 +44,7 @@ def get_directory_contents(path):
 
 def log_operation(operation, path, log_file_path):
     timestamp = datetime.now().isoformat()
-    
+
     print(f"[{timestamp}] {operation}: {path}")
 
     log_entry = {
@@ -61,7 +61,7 @@ def log_operation(operation, path, log_file_path):
         except (json.JSONDecodeError, IOError) as e:
             print(f"Error: Could not read existing log file: {e}. Starting fresh.")
             logs = []
-    
+
     logs.append(log_entry)
 
     log_dir = os.path.dirname(log_file_path)
@@ -85,7 +85,7 @@ def synchronize(source_path, replica_path, log_file_path):
         log_operation("CREATE", replica_path, log_file_path)
 
     processed = set()
-        
+    
     # create dirs
     for rel_path, info in source_contents.items():
         if info["type"] == "dir":
@@ -94,8 +94,8 @@ def synchronize(source_path, replica_path, log_file_path):
                 os.makedirs(full_replica_path, exist_ok=True)
                 log_operation("CREATE", rel_path, log_file_path)
             processed.add(rel_path)
-    
-    #copy or update files
+
+    # copy or update files
     for rel_path, info in source_contents.items():
         if info["type"] == "file":
             source_file = os.path.join(source_path, rel_path)
@@ -110,7 +110,7 @@ def synchronize(source_path, replica_path, log_file_path):
             elif replica_contents[rel_path]["hash"] != info["hash"]:
                 needs_copy = True
                 operation = "UPDATE"
-            
+
             if needs_copy:
                 parent_dir = os.path.dirname(replica_file)
                 if parent_dir and not os.path.exists(parent_dir):
@@ -150,7 +150,6 @@ def main(source_path, replica_path, interval, amount, log_file_path):
     if not os.path.exists(source_path):
         print(f"Error: Source path does not exist: {source_path}")
         return
-
 
     for iteration in range(amount):
 
