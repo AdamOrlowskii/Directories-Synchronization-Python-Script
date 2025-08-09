@@ -75,18 +75,17 @@ def log_operation(operation, path, log_file_path):
         print(f"Warning: Could not write to a log file: {e}")
 
 
-def synchronize(source_path, replica_path, log_file_path):
-
-    source_contents = get_directory_contents(source_path)
-    replica_contents = get_directory_contents(replica_path)
+def create_replica_root(replica_path, log_file_path):
 
     if not os.path.exists(replica_path):
         os.makedirs(replica_path, exist_ok=True)
         log_operation("CREATE", replica_path, log_file_path)
 
+
+def sync_directories(source_contents, replica_contents, replica_path, log_file_path):
+
     processed = set()
 
-    # create dirs
     for rel_path, info in source_contents.items():
         if info["type"] == "dir":
             full_replica_path = os.path.join(replica_path, rel_path)
@@ -94,8 +93,12 @@ def synchronize(source_path, replica_path, log_file_path):
                 os.makedirs(full_replica_path, exist_ok=True)
                 log_operation("CREATE", rel_path, log_file_path)
             processed.add(rel_path)
+    return processed
 
-    # copy or update files
+
+def sync_files(source_contents, replica_contents, source_path, replica_path, log_file_path):
+    processed = set()
+
     for rel_path, info in source_contents.items():
         if info["type"] == "file":
             source_file = os.path.join(source_path, rel_path)
@@ -121,6 +124,11 @@ def synchronize(source_path, replica_path, log_file_path):
 
             processed.add(rel_path)
 
+    return processed
+
+
+def remove_item(replica_contents, replica_path, processed, log_file_path):
+
     for rel_path, info in replica_contents.items():
         if rel_path not in processed:
             full_replica_path = os.path.join(replica_path, rel_path)
@@ -136,6 +144,26 @@ def synchronize(source_path, replica_path, log_file_path):
                         log_operation("REMOVE", rel_path, log_file_path)
                     except (OSError, shutil.Error) as e:
                         print(f"Error: Could not remove directory {rel_path}: {e}")
+
+
+def synchronize(source_path, replica_path, log_file_path):
+
+    source_contents = get_directory_contents(source_path)
+    replica_contents = get_directory_contents(replica_path)
+
+    create_replica_root(replica_path, log_file_path)
+
+    processed = set()
+
+    processed.update(
+        sync_directories(source_contents, replica_contents, replica_path, log_file_path)
+    )
+
+    processed.update(
+        sync_files(source_contents, replica_contents, source_path, replica_path, log_file_path)
+    )
+
+    remove_item(replica_contents, replica_path, processed, log_file_path)
 
 
 def main(source_path, replica_path, interval, amount, log_file_path):
